@@ -1,0 +1,1001 @@
+<html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrera de Clics - Multijugador</title>
+    <style>
+        /* Estilos generales para el cuerpo y contenedores */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container, .click-race-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        /* Animación de entrada para los contenedores */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos para encabezados */
+        h1, h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        h1 { font-size: 2.2rem; }
+        h2 { font-size: 1.4rem; }
+
+        /* Estilos para secciones dentro de los contenedores */
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(245, 245, 245, 0.8);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Estilos para campos de entrada de texto */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Estilos para botones */
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            min-width: 100px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+            filter: brightness(1.1);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            filter: brightness(1);
+            box-shadow: none;
+        }
+
+        /* Estilos para el código de sala */
+        .room-code {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            margin: 12px 0;
+            letter-spacing: 1px;
+            border: 2px dashed #667eea;
+        }
+
+        /* Estilos para mensajes de estado */
+        .status {
+            padding: 12px;
+            border-radius: 10px;
+            margin: 12px 0;
+            font-weight: 600;
+        }
+
+        .status.success { background: rgba(76, 175, 80, 0.15); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.3); }
+        .status.error { background: rgba(244, 67, 54, 0.15); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.3); }
+        .status.info { background: rgba(33, 150, 243, 0.15); color: #2196F3; border: 1px solid rgba(33, 150, 243, 0.3); }
+
+        /* Estilos para la lista de participantes */
+        .participants {
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .participant {
+            background: rgba(102, 126, 234, 0.08);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .participant::before { content: "👤"; margin-right: 8px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Estilos para el estado de conexión */
+        .connection-status {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+            font-size: 0.9rem;
+        }
+
+        .connection-status.connected { background: rgba(76, 175, 80, 0.9); color: white; }
+        .connection-status.disconnected { background: rgba(244, 67, 54, 0.9); color: white; }
+
+        /* Estilos para información de IP */
+        .ip-info {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+            font-size: 0.8rem;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            max-width: 200px;
+            word-break: break-word;
+        }
+
+        /* Clase para ocultar elementos */
+        .hidden { display: none !important; }
+
+        /* Estilos específicos del juego de carrera de clics */
+        .click-race-container h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        #timerDisplay {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 15px 0;
+        }
+        #clickButton {
+            padding: 25px 50px;
+            font-size: 1.8rem;
+            margin: 20px 0;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 300px;
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+            transition: all 0.1s ease-out;
+        }
+
+        #clickButton:active {
+            transform: scale(0.98);
+            filter: brightness(0.9);
+        }
+
+        #clickButton .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            animation: ripple-effect 0.6s linear forwards;
+            transform: scale(0);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        @keyframes ripple-effect {
+            from {
+                transform: scale(0);
+                opacity: 1;
+            }
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        #clickButton.clicked {
+            animation: button-pop-glow 0.2s ease-out forwards;
+        }
+
+        @keyframes button-pop-glow {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+            }
+            50% {
+                transform: scale(1.05);
+                filter: brightness(1.3) saturate(1.5);
+                box-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(102, 126, 234, 0.5);
+            }
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+            }
+        }
+
+        #scoreDisplay {
+            font-size: 1.3rem;
+            margin: 15px 0;
+        }
+        #gameStatus {
+            font-size: 1.1rem;
+            min-height: 20px;
+            margin-top: 10px;
+        }
+        #rankingSection {
+            margin-top: 25px;
+            text-align: left;
+        }
+        #rankingSection h3 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        #rankingList {
+            list-style: none;
+            padding: 0;
+        }
+        #rankingList li {
+            background: rgba(0,0,0,0.03);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+         #rankingList li strong {
+            color: #667eea;
+        }
+
+        /* Media queries para diseño responsivo */
+        @media (max-width: 600px) {
+            .container, .click-race-container { padding: 20px; margin: 10px; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+            .section { padding: 15px; }
+            button { padding: 10px 20px; font-size: 0.9rem; }
+            #clickButton { padding: 20px 40px; font-size: 1.5rem; }
+            .ip-info { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">🔴 Desconectado</div>
+    <div class="ip-info" id="ipInfo">Detectando IP...</div>
+
+    <div class="container" id="menuContainer">
+        <h1>🏁 Carrera de Clics</h1>
+        
+        <div class="section">
+            <h2>📝 Tu Nombre</h2>
+            <input type="text" id="usernameInput" placeholder="Ingresa tu nombre" maxlength="20">
+            <button onclick="setUsername()">Establecer Nombre</button>
+            <div id="usernameStatus"></div>
+        </div>
+
+        <div class="section" id="createSection">
+            <h2>➕ Crear Sala</h2>
+            <button onclick="createRoom()">Crear Nueva Sala</button>
+            <div id="createStatus"></div>
+            <div id="roomCodeDisplay" class="hidden">
+                <div>Tu código de sala:</div>
+                <div class="room-code" id="roomCode"></div>
+                <button onclick="copyRoomCode()">📋 Copiar Código</button>
+            </div>
+        </div>
+
+        <div class="section" id="joinSection">
+            <h2>🚪 Unirse a Sala</h2>
+            <input type="text" id="roomCodeInput" placeholder="Código de la sala" maxlength="6">
+            <button onclick="joinRoom()">Unirse</button>
+            <div id="joinStatus"></div>
+        </div>
+
+        <div class="section hidden" id="roomSection">
+            <h2>👥 En la Sala: <span id="currentRoomCode"></span></h2>
+            <div class="participants" id="participants"></div>
+            <button onclick="initiateGame()" id="startGameButton" disabled="">🎮 Iniciar Juego</button>
+            <button onclick="leaveRoom()">🚪 Salir de la Sala</button>
+        </div>
+    </div>
+
+    <div class="click-race-container hidden" id="clickRaceContainer">
+        <h2 id="gameTitle">Carrera de Clics</h2>
+        <div id="timerDisplay">Tiempo restante: --s</div>
+        <button id="clickButton" onclick="registerClick(event)" disabled="">¡Haz Clic Aquí!</button>
+        <div id="scoreDisplay">Tus Clics: 0</div>
+        <div id="gameStatus" class="status info">Esperando que el juego comience...</div>
+        
+        <div id="rankingSection" class="hidden">
+            <h3>🏆 Ranking Final 🏆</h3>
+            <ul id="rankingList"></ul>
+        </div>
+        <button onclick="exitGame()" id="exitGameButton">🔙 Volver al Lobby</button>
+    </div>
+
+    <script>
+        // Configuración del servidor - IP detectada automáticamente
+        const SERVER_PORT = 3000;
+        let SERVER_URL = null;
+        const GAME_DURATION_SECONDS = 10;
+
+        let ws = null;
+        let username = '';
+        let currentRoom = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        
+        let localClickCount = 0;
+        let gameTimerInterval = null;
+        let gameIsActive = false;
+
+        // Elementos del DOM
+        const elements = {
+            connectionStatus: document.getElementById('connectionStatus'),
+            ipInfo: document.getElementById('ipInfo'),
+            usernameInput: document.getElementById('usernameInput'),
+            usernameStatus: document.getElementById('usernameStatus'),
+            createSection: document.getElementById('createSection'),
+            joinSection: document.getElementById('joinSection'),
+            roomSection: document.getElementById('roomSection'),
+            createStatus: document.getElementById('createStatus'),
+            joinStatus: document.getElementById('joinStatus'),
+            roomCodeDisplay: document.getElementById('roomCodeDisplay'),
+            roomCode: document.getElementById('roomCode'),
+            roomCodeInput: document.getElementById('roomCodeInput'),
+            currentRoomCode: document.getElementById('currentRoomCode'),
+            participants: document.getElementById('participants'),
+            menuContainer: document.getElementById('menuContainer'),
+            // Elementos del juego
+            clickRaceContainer: document.getElementById('clickRaceContainer'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            clickButton: document.getElementById('clickButton'),
+            scoreDisplay: document.getElementById('scoreDisplay'),
+            gameStatus: document.getElementById('gameStatus'),
+            rankingSection: document.getElementById('rankingSection'),
+            rankingList: document.getElementById('rankingList'),
+            startGameButton: document.getElementById('startGameButton'),
+            exitGameButton: document.getElementById('exitGameButton')
+        };
+
+        // Detectar la IP local automáticamente
+        async function detectLocalIP() {
+            const possibleIPs = [];
+            
+            // Método 1: Usar WebRTC para obtener IPs locales
+            try {
+                const ips = await getLocalIPsViaWebRTC();
+                possibleIPs.push(...ips);
+            } catch (error) {
+                console.log('WebRTC IP detection failed:', error);
+            }
+
+            // Método 2: Probar IPs comunes de red local
+            const commonRanges = [
+                '192.168.1.',
+                '192.168.0.',
+                '192.168.100.',
+                '10.0.0.',
+                '172.16.0.'
+            ];
+
+            // Si no obtuvimos IPs por WebRTC, usar la IP del hostname actual
+            if (possibleIPs.length === 0) {
+                const hostname = window.location.hostname;
+                if (hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '') {
+                    possibleIPs.push(hostname);
+                }
+            }
+
+            // Agregar localhost como fallback
+            possibleIPs.push('localhost', '127.0.0.1');
+
+            // Probar cada IP posible
+            for (const ip of possibleIPs) {
+                const testUrl = `ws://${ip}:${SERVER_PORT}`;
+                if (await testWebSocketConnection(testUrl)) {
+                    SERVER_URL = testUrl;
+                    elements.ipInfo.textContent = `🌐 ${ip}:${SERVER_PORT}`;
+                    console.log(`Conectando a: ${SERVER_URL}`);
+                    return SERVER_URL;
+                }
+            }
+
+            // Si no se encontró ninguna IP que funcione, usar localhost por defecto
+            SERVER_URL = `ws://localhost:${SERVER_PORT}`;
+            elements.ipInfo.textContent = `🌐 localhost:${SERVER_PORT} (fallback)`;
+            return SERVER_URL;
+        }
+
+        // Obtener IPs locales usando WebRTC
+        function getLocalIPsViaWebRTC() {
+            return new Promise((resolve, reject) => {
+                const ips = [];
+                const timeout = setTimeout(() => {
+                    resolve(ips);
+                }, 3000); // Timeout después de 3 segundos
+
+                try {
+                    const pc = new RTCPeerConnection({
+                        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                    });
+
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+                    pc.onicecandidate = (event) => {
+                        if (!event || !event.candidate || !event.candidate.candidate) return;
+                        
+                        const candidate = event.candidate.candidate;
+                        const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        
+                        if (ipMatch && ipMatch[1]) {
+                            const ip = ipMatch[1];
+                            // Filtrar solo IPs de red local
+                            if (ip.startsWith('192.168.') || 
+                                ip.startsWith('10.') || 
+                                ip.startsWith('172.16.') ||
+                                ip.startsWith('172.17.') ||
+                                ip.startsWith('172.18.') ||
+                                ip.startsWith('172.19.') ||
+                                ip.startsWith('172.20.') ||
+                                ip.startsWith('172.21.') ||
+                                ip.startsWith('172.22.') ||
+                                ip.startsWith('172.23.') ||
+                                ip.startsWith('172.24.') ||
+                                ip.startsWith('172.25.') ||
+                                ip.startsWith('172.26.') ||
+                                ip.startsWith('172.27.') ||
+                                ip.startsWith('172.28.') ||
+                                ip.startsWith('172.29.') ||
+                                ip.startsWith('172.30.') ||
+                                ip.startsWith('172.31.')) {
+                                if (!ips.includes(ip)) {
+                                    ips.push(ip);
+                                }
+                            }
+                        }
+                    };
+
+                    pc.onicegatheringstatechange = () => {
+                        if (pc.iceGatheringState === 'complete') {
+                            clearTimeout(timeout);
+                            pc.close();
+                            resolve(ips);
+                        }
+                    };
+
+                } catch (error) {
+                    clearTimeout(timeout);
+                    reject(error);
+                }
+            });
+        }
+
+        // Probar conexión WebSocket
+        function testWebSocketConnection(url) {
+            return new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    resolve(false);
+                }, 2000); // Timeout de 2 segundos
+
+                try {
+                    const testWs = new WebSocket(url);
+                    
+                    testWs.onopen = () => {
+                        clearTimeout(timeout);
+                        testWs.close();
+                        resolve(true);
+                    };
+
+                    testWs.onerror = () => {
+                        clearTimeout(timeout);
+                        resolve(false);
+                    };
+
+                    testWs.onclose = () => {
+                        clearTimeout(timeout);
+                        resolve(false);
+                    };
+
+                } catch (error) {
+                    clearTimeout(timeout);
+                    resolve(false);
+                }
+            });
+        }
+
+        // Conectar al servidor WebSocket
+        async function connect() {
+            if (!SERVER_URL) {
+                elements.ipInfo.textContent = 'Detectando IP...';
+                await detectLocalIP();
+            }
+
+            try {
+                ws = new WebSocket(SERVER_URL);
+                
+                ws.onopen = function() {
+                    console.log('Conectado al servidor');
+                    updateConnectionStatus(true);
+                    reconnectAttempts = 0;
+                    // Si ya tenemos un nombre de usuario, lo enviamos al servidor
+                    if (username) sendMessage({ type: 'setUsername', username: username });
+                };
+
+                ws.onmessage = function(event) {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                };
+
+                ws.onclose = function() {
+                    console.log('Conexión cerrada');
+                    updateConnectionStatus(false);
+                    if (gameIsActive) handleGameAbruptEnd(); 
+                    attemptReconnect();
+                };
+
+                ws.onerror = function(error) {
+                    console.error('Error de WebSocket:', error);
+                    updateConnectionStatus(false);
+                     if (gameIsActive) handleGameAbruptEnd();
+                };
+
+            } catch (error) {
+                console.error('Error al conectar:', error);
+                updateConnectionStatus(false);
+                attemptReconnect();
+            }
+        }
+
+        // Intentar reconectar al servidor con un retardo exponencial
+        async function attemptReconnect() {
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                console.log(`Intentando reconectar... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                
+                // Si es el primer intento de reconexión, volver a detectar la IP
+                if (reconnectAttempts === 1) {
+                    SERVER_URL = null;
+                }
+                
+                setTimeout(connect, 2000 * reconnectAttempts);
+            } else {
+                console.log('Máximos intentos de reconexión alcanzados.');
+                 showStatus('error', 'No se pudo reconectar al servidor. Refresca la página.', 'usernameStatus');
+                 elements.ipInfo.textContent = '❌ Sin conexión';
+            }
+        }
+
+        // Actualizar el estado visual de la conexión
+        function updateConnectionStatus(connected) {
+            elements.connectionStatus.textContent = connected ? '🟢 Conectado' : '🔴 Desconectado';
+            elements.connectionStatus.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+        }
+
+        // Enviar un mensaje al servidor a través del WebSocket
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+            } else {
+                showStatus('error', 'No hay conexión con el servidor', 'createStatus');
+                console.error('Intento de enviar mensaje sin conexión WebSocket activa.');
+            }
+        }
+
+        // Manejar los mensajes recibidos del servidor
+        function handleMessage(message) {
+            console.log('Mensaje recibido:', message);
+            switch (message.type) {
+                case 'usernameSet':
+                    if (message.success) {
+                        showStatus('success', `Nombre establecido: ${username}`, 'usernameStatus');
+                    } else {
+                        showStatus('error', message.error, 'usernameStatus');
+                    }
+                    break;
+                case 'roomCreated':
+                    if (message.success) {
+                        currentRoom = message.roomCode;
+                        elements.roomCode.textContent = message.roomCode;
+                        elements.roomCodeDisplay.classList.remove('hidden');
+                        showStatus('success', '¡Sala creada exitosamente!', 'createStatus');
+                        showRoomSection();
+                    } else {
+                        showStatus('error', message.error, 'createStatus');
+                    }
+                    break;
+                case 'roomJoined':
+                    if (message.success) {
+                        currentRoom = message.roomCode;
+                        showStatus('success', `Te uniste a la sala ${message.roomCode}`, 'joinStatus');
+                        showRoomSection();
+                    } else {
+                        showStatus('error', message.error, 'joinStatus');
+                    }
+                    break;
+                case 'roomLeft':
+                    currentRoom = null;
+                    hideRoomSection();
+                    elements.roomCodeDisplay.classList.add('hidden');
+                    showStatus('info', 'Has salido de la sala', 'createStatus');
+                    if (gameIsActive) exitGame(false);
+                    break;
+                case 'participantsUpdate':
+                    updateParticipants(message.participants, message.hostUsername);
+                    break;
+                case 'clickRaceStarted':
+                    gameIsActive = true;
+                    localClickCount = 0;
+                    elements.scoreDisplay.textContent = `Tus Clics: ${localClickCount}`;
+                    elements.clickButton.disabled = false;
+                    elements.rankingSection.classList.add('hidden');
+                    elements.rankingList.innerHTML = '';
+                    elements.menuContainer.classList.add('hidden');
+                    elements.clickRaceContainer.classList.remove('hidden');
+                    startClientTimer(message.duration);
+                    elements.gameStatus.textContent = "¡A Clickeaaar!";
+                    elements.gameStatus.className = "status info";
+                    elements.exitGameButton.textContent = "🛑 Terminar Juego Antes";
+                    break;
+                case 'clickRaceOver':
+                    gameIsActive = false;
+                    elements.clickButton.disabled = true;
+                    if (gameTimerInterval) clearInterval(gameTimerInterval);
+                    elements.timerDisplay.textContent = "¡Tiempo!";
+                    elements.gameStatus.textContent = "Juego Terminado. Mostrando resultados...";
+                    elements.gameStatus.className = "status success";
+                    displayRanking(message.scores);
+                    elements.exitGameButton.textContent = "🔙 Volver al Lobby";
+                    break;
+                case 'error':
+                    showStatus('error', message.message, currentRoom ? 'createStatus' : 'usernameStatus');
+                    break;
+                default:
+                    console.log('Mensaje no reconocido:', message);
+            }
+        }
+        
+        // Manejar el final abrupto del juego (ej. por desconexión)
+        function handleGameAbruptEnd() {
+            gameIsActive = false;
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            elements.clickButton.disabled = true;
+            elements.timerDisplay.textContent = "Juego Interrumpido";
+            elements.gameStatus.textContent = "El juego fue interrumpido.";
+            elements.gameStatus.className = "status error";
+            elements.rankingSection.classList.add('hidden'); 
+            elements.exitGameButton.textContent = "🔙 Volver al Menú Principal";
+        }
+
+        // Establecer el nombre de usuario
+        function setUsername() {
+            const newUsername = elements.usernameInput.value.trim();
+            if (newUsername.length < 2) {
+                showStatus('error', 'El nombre debe tener al menos 2 caracteres', 'usernameStatus');
+                return;
+            }
+            if (newUsername.length > 20) {
+                showStatus('error', 'El nombre no puede tener más de 20 caracteres', 'usernameStatus');
+                return;
+            }
+            username = newUsername;
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                connect(); 
+            } else {
+                sendMessage({ type: 'setUsername', username: username });
+            }
+        }
+
+        // Crear una nueva sala
+        function createRoom() {
+            if (!username) {
+                showStatus('error', 'Primero establece tu nombre', 'createStatus');
+                return;
+            }
+            sendMessage({ type: 'createRoom' });
+        }
+
+        // Unirse a una sala existente
+        function joinRoom() {
+            if (!username) {
+                showStatus('error', 'Primero establece tu nombre', 'joinStatus');
+                return;
+            }
+            const roomCode = elements.roomCodeInput.value.trim().toUpperCase();
+            if (roomCode.length !== 6) {
+                showStatus('error', 'El código debe tener 6 caracteres', 'joinStatus');
+                return;
+            }
+            sendMessage({ type: 'joinRoom', roomCode: roomCode });
+        }
+
+        // Salir de la sala actual
+        function leaveRoom() {
+            sendMessage({ type: 'leaveRoom' });
+        }
+
+        // Copiar el código de la sala al portapapeles
+        function copyRoomCode() {
+            const code = elements.roomCode.textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showStatus('success', 'Código copiado al portapapeles', 'createStatus');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(code);
+                });
+            } else {
+                fallbackCopyTextToClipboard(code);
+            }
+        }
+
+        // Función de respaldo para copiar texto al portapapeles
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showStatus('success', 'Código copiado (método alternativo)', 'createStatus');
+                } else {
+                    showStatus('error', 'No se pudo copiar el código', 'createStatus');
+                }
+            } catch (err) {
+                showStatus('error', 'Error al copiar el código', 'createStatus');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Mostrar la sección de la sala y ocultar las de menú
+        function showRoomSection() {
+            elements.currentRoomCode.textContent = currentRoom;
+            elements.roomSection.classList.remove('hidden');
+            elements.createSection.classList.add('hidden'); 
+            elements.joinSection.classList.add('hidden');   
+            elements.usernameInput.parentElement.classList.add('hidden'); 
+        }
+
+        // Ocultar la sección de la sala y mostrar las de menú
+        function hideRoomSection() {
+            elements.roomSection.classList.add('hidden');
+            elements.createSection.classList.remove('hidden'); 
+            elements.joinSection.classList.remove('hidden');   
+            elements.usernameInput.parentElement.classList.remove('hidden'); 
+            currentRoom = null; 
+        }
+
+        // Actualizar la lista de participantes en la sala
+        function updateParticipants(participantsList, hostUsername) {
+            elements.participants.innerHTML = '';
+            let isHost = false;
+            if (participantsList && participantsList.length > 0) {
+                participantsList.forEach(participantName => {
+                    const div = document.createElement('div');
+                    div.className = 'participant';
+                    let displayName = participantName;
+                    if (participantName === username) displayName += ' (Tú)';
+                    if (participantName === hostUsername) {
+                        displayName += ' 👑 (Anfitrión)';
+                        if (participantName === username) isHost = true;
+                    }
+                    div.textContent = displayName;
+                    elements.participants.appendChild(div);
+                });
+            } else {
+                elements.participants.innerHTML = '<div>No hay participantes aún.</div>';
+            }
+
+            if (isHost) {
+                elements.startGameButton.disabled = false;
+                elements.startGameButton.textContent = '🎮 Iniciar Juego';
+            } else {
+                 elements.startGameButton.disabled = true;
+                 elements.startGameButton.textContent = 'Esperando al Anfitrión';
+            }
+             if(participantsList.length === 0){
+                elements.startGameButton.disabled = true;
+            }
+        }
+
+        // Mostrar un mensaje de estado temporal
+        function showStatus(type, message, elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `<div class="status ${type}">${message}</div>`;
+                setTimeout(() => {
+                    if (element && element.innerHTML.includes(message)) { // Verificar si el elemento todavía existe y contiene el mensaje
+                        element.innerHTML = '';
+                    }
+                }, 5000);
+            }
+        }
+
+        // --- Funciones de Lógica del Juego ---
+        // Iniciar el juego de carrera de clics
+        function initiateGame() {
+            sendMessage({ type: 'initiateClickRace' });
+            elements.startGameButton.disabled = true;
+            elements.startGameButton.textContent = "Iniciando...";
+        }
+
+        // Iniciar el temporizador del cliente para el juego
+        function startClientTimer(duration) {
+            let timeLeft = duration;
+            elements.timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+            if (gameTimerInterval) clearInterval(gameTimerInterval); 
+
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                elements.timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimerInterval);
+                    elements.timerDisplay.textContent = "¡Tiempo!";
+                    elements.clickButton.disabled = true;
+                    elements.gameStatus.textContent = "Esperando resultados finales...";
+                }
+            }, 1000);
+        }
+
+        // Registrar un clic y aplicar animaciones al botón
+        function registerClick(event) {
+            if (!gameIsActive) return;
+            localClickCount++;
+            elements.scoreDisplay.textContent = `Tus Clics: ${localClickCount}`;
+            sendMessage({ type: 'iMadeAClick' }); 
+
+            // --- Efectos de Animación del Botón ---
+            const button = elements.clickButton;
+
+            // 1. Añadir clase para la animación de "pop" y brillo
+            button.classList.remove('clicked'); // Remover para re-activar la animación si se hace clic rápidamente
+            void button.offsetWidth; // Forzar un "reflow" para reiniciar la animación CSS
+            button.classList.add('clicked');
+
+            // 2. Crear efecto de onda (ripple)
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+            
+            // Calcular la posición para el ripple (centrado en el punto del clic)
+            const rect = button.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
+
+            button.appendChild(ripple);
+
+            // Eliminar el elemento ripple después de que termine su animación
+            ripple.addEventListener('animationend', () => {
+                ripple.remove();
+            });
+            // --- Fin de Efectos de Animación del Botón ---
+        }
+
+        // Mostrar el ranking final del juego
+        function displayRanking(scoresData) {
+            elements.rankingList.innerHTML = ''; 
+            
+            let scoresArray = [];
+            // Asegurarse de que scoresData sea un array o convertirlo
+            if (Array.isArray(scoresData)) { 
+                scoresArray = scoresData;
+            } else { 
+                 scoresArray = Object.entries(scoresData).map(([name, score]) => ({ username: name, score: score }));
+            }
+
+            // Ordenar los jugadores por puntuación de forma descendente
+            scoresArray.sort((a, b) => b.score - a.score); 
+
+            scoresArray.forEach((player, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${index + 1}. ${player.username}</span> <strong>${player.score} clics</strong>`;
+                elements.rankingList.appendChild(li);
+            });
+            elements.rankingSection.classList.remove('hidden');
+        }
+
+        // Salir del juego y volver al lobby o menú principal
+        function exitGame(sendLeaveMessage = true) {
+            gameIsActive = false;
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            
+            elements.clickRaceContainer.classList.add('hidden');
+            elements.menuContainer.classList.remove('hidden');
+
+            if (currentRoom) { 
+                showRoomSection(); 
+                 if (sendLeaveMessage && elements.exitGameButton.textContent.includes("Terminar Juego Antes")) {
+                    // Este caso es más sobre salir de la pantalla del juego, no necesariamente de la sala.
+                    // Si el juego ha terminado, este botón lleva al lobby.
+                    // Si el juego está activo y se hace clic, es como rendirse. El servidor debería manejar esto.
+                    // Por simplicidad, solo volvemos al lobby.
+                }
+            } else { 
+                hideRoomSection(); 
+            }
+            
+            // Re-evaluar el estado de anfitrión para el botón de iniciar juego
+            elements.startGameButton.disabled = (username !== elements.participants.textContent.split(" ")[0]); 
+            elements.startGameButton.textContent = '🎮 Iniciar Juego';
+            elements.exitGameButton.textContent = "🔙 Volver al Lobby"; 
+        }
+
+
+        // Event listeners para la tecla Enter en los campos de entrada
+        elements.usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') setUsername();
+        });
+        elements.roomCodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') joinRoom();
+        });
+        // Convertir automáticamente el código de sala a mayúsculas
+        elements.roomCodeInput.addEventListener('input', function(e) { 
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Conectar al servidor al cargar la página
+        document.addEventListener('DOMContentLoaded', connect);
+
+    </script>
+</body>
+</html>

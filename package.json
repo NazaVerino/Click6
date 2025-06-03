@@ -1,0 +1,16 @@
+{
+  "name": "salas-app",
+  "version": "1.0.0",
+  "description": "Aplicación para crear y unirse a salas",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
+  },
+  "keywords": ["websocket", "salas", "rooms", "real-time"],
+  "author": "Tu Nombre",
+  "license": "MIT"
+}
